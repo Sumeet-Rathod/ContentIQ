@@ -1,0 +1,86 @@
+@startuml use_case_admin_rbac
+title ContentIQ — Multi-Tenancy, Team Governance & RBAC Subsystem\n(Use Case Specification 2C)
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+skinparam defaultFontColor #1E293B
+
+skinparam packageStyle rectangle
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 2
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 13
+}
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.8
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 12
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.4
+    FontColor #1E293B
+    FontSize 11
+    ArrowColor #1F3864
+}
+
+actor "Agency Administrator" as Admin
+actor "Content Editor" as Editor
+actor "Agency Client" as Client
+
+rectangle "Multi-Tenancy, Team Governance & RBAC Subsystem" {
+
+    usecase "UC-01: Register Agency Tenant & Workspace\n(Creates 'tenants' & admin in 'users')" as UC_Reg
+    usecase "UC-02: Authenticate via Email & Password\n(Bcrypt 12 Rounds + HS256 JWT Token)" as UC_Auth
+    usecase "UC-02A: 1-Click Viva Demo Role Switcher\n(Admin / Editor / Client / Tenant 2)" as UC_QuickLogin
+    usecase "UC-03: Manage Team Members\n(/team Management Portal)" as UC_Team
+    usecase "UC-03A: Assign RBAC Role\n('admin', 'editor', 'client')" as UC_AssignRole
+    usecase "UC-04: Enforce Tenant-Level Data Scoping\n(Every MongoDB query filtered by tenant_id)" as UC_TenantScope
+    usecase "UC-04A: Verify Cross-Tenant Data Isolation\n(Tenant A vs. Tenant B Partitioning)" as UC_Isolate
+    usecase "UC-04B: Render Role-Adaptive UI Navigation\n(Admin: 12 links, Editor: 10, Client: 6)" as UC_AdaptNav
+}
+
+Admin --> UC_Reg
+Admin --> UC_Auth
+Admin --> UC_QuickLogin
+Admin --> UC_Team
+Admin --> UC_AssignRole
+Admin --> UC_Isolate
+
+Editor --> UC_Auth
+Editor --> UC_QuickLogin
+
+Client --> UC_Auth
+Client --> UC_QuickLogin
+
+UC_Auth ..> UC_TenantScope : <<include>>
+UC_Auth ..> UC_AdaptNav : <<include>>
+UC_QuickLogin ..> UC_Auth : <<extend>>
+UC_Team ..> UC_AssignRole : <<include>>
+UC_TenantScope ..> UC_Isolate : <<enforces>>
+
+note right of UC_AdaptNav
+  <b>Dynamic RBAC UI Adaptation:</b>
+  - <b>Admin:</b> Full access (12 modules + Retrain button)
+  - <b>Editor:</b> Content tools (10 modules, team hidden)
+  - <b>Client:</b> Observer portal (6 modules, creation & retrain locked)
+end note
+
+note bottom of UC_Isolate
+  <b>Hard Multi-Tenancy Architecture:</b>
+  No shared collections without compound
+  indexes on <i>tenant_id</i>. Prevents any
+  cross-agency information leakage.
+end note
+
+@enduml

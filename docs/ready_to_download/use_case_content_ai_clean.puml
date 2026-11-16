@@ -1,0 +1,81 @@
+@startuml
+left to right direction
+
+title ContentIQ: Content Authoring & Pre-Flight AI Subsystem
+header Module Specification 2A
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing true
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 1.5
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1E293B
+    ArrowColor #1F3864
+}
+
+actor "Content Editor" as Editor <<Human>>
+actor "Agency Administrator" as Admin <<Human>>
+
+Editor <|-- Admin
+
+rectangle "Content Authoring & Pre-Flight AI Subsystem" {
+    usecase "UC-05: Compose Social Media Post
+(Instagram / LinkedIn / YouTube)" as UC_Compose
+    usecase "UC-05A: Extract 10-Feature Vector
+(Length, Hashtags, Local Hour)" as UC_Extract
+    usecase "UC-06: Pre-Flight ML Prediction
+(Low <2%, Med 2-5%, High >5%)" as UC_Predict
+    usecase "UC-07: 24-Hour Best-Time Probability Sweep
+(Simulates hours 0-23 for peak slot)" as UC_Sweep
+    usecase "UC-08: Score Thumbnail Aesthetics
+(OpenCV Rule-of-Thirds & Energy)" as UC_Thumb
+    usecase "UC-09: Schedule on Interactive Calendar" as UC_Calendar
+    usecase "UC-09A: Drag-and-Drop Reschedule Post" as UC_Drag
+    usecase "UC-10: Configure Multivariate A/B Test
+(Variant A vs. Variant B)" as UC_AB
+}
+
+Editor --> UC_Compose
+Editor --> UC_Thumb
+Editor --> UC_Calendar
+Editor --> UC_AB
+
+UC_Compose ..> UC_Extract : <<include>>
+UC_Extract ..> UC_Predict : <<include>>
+UC_Compose ..> UC_Sweep : <<extend>>
+UC_Compose ..> UC_Thumb : <<extend>>
+UC_Calendar ..> UC_Drag : <<extend>>
+UC_Calendar ..> UC_Compose : <<include>>
+
+note right of UC_Sweep
+  <b>24-Hour Probability Sweep:</b>
+  Iterates through hours 0-23
+  holding caption constant to identify
+  the peak engagement window.
+end note
+
+note bottom of UC_Thumb
+  <b>OpenCV 4.10 Vision Metric:</b>
+  Evaluates edge sharpness, contrast,
+  colorfulness, and Rule-of-Thirds
+  composition (0 to 100 score).
+end note
+
+@enduml

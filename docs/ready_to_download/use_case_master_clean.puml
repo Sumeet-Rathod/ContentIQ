@@ -1,0 +1,130 @@
+@startuml
+left to right direction
+
+title ContentIQ: Complete System Use Case Diagram
+header GLS University | FCAIT | iMCA SEM IX (Course: 222301907)
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing true
+skinparam packageStyle rectangle
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 1.5
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1E293B
+    ArrowColor #1F3864
+}
+
+' Human Actors on the Left
+actor "Agency Administrator" as Admin <<Human>>
+actor "Content Editor" as Editor <<Human>>
+actor "Agency Client (Observer)" as Client <<Human>>
+
+' System Actor on the Right
+actor "Celery Background Worker" as Celery <<System>>
+
+' Role Inheritance
+Editor <|-- Admin
+
+rectangle "ContentIQ Platform" {
+
+    package "1. Authentication & Multi-Tenancy" {
+        usecase "UC-01: Register Agency Workspace" as UC01
+        usecase "UC-02: Authenticate (Email & Password)" as UC02
+        usecase "UC-03: Manage Team & Assign RBAC Roles" as UC03
+        usecase "UC-04: Switch Tenant Workspace" as UC04
+    }
+
+    package "2. Content Authoring & Pre-Flight AI" {
+        usecase "UC-05: Compose Social Media Post Draft" as UC05
+        usecase "UC-06: Pre-Flight Engagement Prediction" as UC06
+        usecase "UC-07: 24-Hour Best-Time Probability Sweep" as UC07
+        usecase "UC-08: Score Thumbnail Aesthetics (OpenCV)" as UC08
+        usecase "UC-09: Schedule Post on Interactive Calendar" as UC09
+        usecase "UC-10: Execute A/B Split Test" as UC10
+    }
+
+    package "3. Automated Queue & Publishing" {
+        usecase "UC-11: Auto-Publish Due Posts (Sandbox)" as UC11
+        usecase "UC-12: Ingest Post-Publication Metrics" as UC12
+        usecase "UC-13: Dispatch In-App Notifications" as UC13
+    }
+
+    package "4. Analytics, Reporting & Retraining" {
+        usecase "UC-14: View Executive Performance Dashboard" as UC14
+        usecase "UC-15: Export Performance Report to Excel (.csv)" as UC15
+        usecase "UC-16: Print Executive Report (PDF)" as UC16
+        usecase "UC-17: Analyze Comment Sentiment (VADER)" as UC17
+        usecase "UC-18: Forecast 30-Day Follower Growth" as UC18
+        usecase "UC-19: Trigger Continuous Model Retraining" as UC19
+    }
+}
+
+' Admin Associations
+Admin --> UC01
+Admin --> UC03
+Admin --> UC04
+Admin --> UC19
+
+' Editor Associations (Inherited by Admin)
+Editor --> UC02
+Editor --> UC05
+Editor --> UC08
+Editor --> UC09
+Editor --> UC10
+Editor --> UC14
+Editor --> UC17
+
+' Client Associations (Read-Only)
+Client --> UC02
+Client --> UC09 #0284C7 : (Read-Only)
+Client --> UC14 #0284C7
+Client --> UC15 #0284C7
+Client --> UC16 #0284C7
+Client --> UC18 #0284C7
+
+' Celery Worker Associations
+Celery --> UC11 #475569
+Celery --> UC12 #475569
+Celery --> UC13 #475569
+
+' Include & Extend Stereotypes
+UC05 ..> UC06 : <<include>>
+UC05 ..> UC07 : <<extend>>
+UC09 ..> UC05 : <<include>>
+UC11 ..> UC13 : <<include>>
+UC12 ..> UC14 : <<include>>
+UC14 ..> UC15 : <<extend>>
+UC14 ..> UC16 : <<extend>>
+UC19 ..> UC06 : <<refines>>
+
+note right of UC19
+  <b>Continuous Retraining:</b>
+  Triggered when >= 50 real
+  metric records accumulate.
+end note
+
+note bottom of Client
+  <b>Observer Portal:</b>
+  Read-only campaign tracking.
+  Content authoring & retrain
+  buttons are hidden.
+end note
+
+@enduml

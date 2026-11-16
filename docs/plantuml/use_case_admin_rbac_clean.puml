@@ -1,0 +1,84 @@
+@startuml
+left to right direction
+
+title ContentIQ: Multi-Tenancy, Team Governance & RBAC Subsystem
+header Module Specification 2C
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing true
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 1.5
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1E293B
+    ArrowColor #1F3864
+}
+
+actor "Agency Administrator" as Admin <<Human>>
+actor "Content Editor" as Editor <<Human>>
+actor "Agency Client" as Client <<Human>>
+
+rectangle "Multi-Tenancy, Team Governance & RBAC Subsystem" {
+    usecase "UC-01: Register Agency Workspace
+(Creates 'tenants' & admin in 'users')" as UC_Reg
+    usecase "UC-02: Authenticate (Email & Password)
+(Bcrypt 12 Rounds + HS256 JWT Token)" as UC_Auth
+    usecase "UC-02A: 1-Click Viva Demo Role Switcher
+(Admin / Editor / Client / Tenant 2)" as UC_QuickLogin
+    usecase "UC-03: Manage Team Members & Roles
+(Invite staff & set role permissions)" as UC_Team
+    usecase "UC-04: Enforce Tenant-Level Data Scoping
+(Every MongoDB query filtered by tenant_id)" as UC_TenantScope
+    usecase "UC-04A: Verify Cross-Tenant Isolation
+(Tenant A vs. Tenant B Partitioning)" as UC_Isolate
+    usecase "UC-04B: Render Role-Adaptive UI Navigation
+(Admin: 12 links, Editor: 10, Client: 6)" as UC_AdaptNav
+}
+
+Admin --> UC_Reg
+Admin --> UC_Auth
+Admin --> UC_QuickLogin
+Admin --> UC_Team
+Admin --> UC_Isolate
+
+Editor --> UC_Auth
+Editor --> UC_QuickLogin
+
+Client --> UC_Auth
+Client --> UC_QuickLogin
+
+UC_Auth ..> UC_TenantScope : <<include>>
+UC_Auth ..> UC_AdaptNav : <<include>>
+UC_QuickLogin ..> UC_Auth : <<extend>>
+UC_TenantScope ..> UC_Isolate : <<enforces>>
+
+note right of UC_AdaptNav
+  <b>Dynamic Navigation Adaptation:</b>
+  - Admin: Full access (12 modules + Retrain)
+  - Editor: Content authoring (10 modules)
+  - Client: Observer portal (6 modules)
+end note
+
+note bottom of UC_Isolate
+  <b>Row-Level Database Isolation:</b>
+  All posts, metrics, comments, and
+  competitors are tagged with tenant_id.
+end note
+
+@enduml

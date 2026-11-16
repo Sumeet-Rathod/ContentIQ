@@ -1,0 +1,82 @@
+@startuml use_case_content_ai
+title ContentIQ — Content Authoring & Pre-Flight AI Engine Subsystem\n(Use Case Specification 2A)
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+skinparam defaultFontColor #1E293B
+
+skinparam packageStyle rectangle
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 2
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 13
+}
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.8
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 12
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.4
+    FontColor #1E293B
+    FontSize 11
+    ArrowColor #1F3864
+}
+
+actor "Content Editor" as Editor
+actor "Agency Administrator" as Admin
+
+Editor <|-- Admin
+
+rectangle "Content Authoring & Pre-Flight AI Subsystem" {
+
+    usecase "UC-05: Compose Social Media Post\n(Instagram / LinkedIn / YouTube)" as UC_Compose
+    usecase "UC-05A: Extract 10-Feature Vector\n(Length, Hashtag Ratio, Local Hour)" as UC_Extract
+    usecase "UC-06: Pre-Flight ML Prediction\n(Low <2%, Med 2-5%, High >5%)" as UC_Predict
+    usecase "UC-07: 24-Hour Best-Time Sweep\n(Simulates hours 0-23 for peak slot)" as UC_Sweep
+    usecase "UC-08: Score Thumbnail Aesthetics\n(OpenCV Rule-of-Thirds & Energy)" as UC_Thumb
+    usecase "UC-09: Schedule on Monthly Calendar" as UC_Cal
+    usecase "UC-09A: Drag-and-Drop Reschedule" as UC_Drag
+    usecase "UC-10: Configure A/B Variant Test\n(Variant A vs. Variant B)" as UC_AB
+    usecase "UC-11: Recommend Trending Topics\n(TF-IDF & Cosine Similarity)" as UC_Topics
+}
+
+Editor --> UC_Compose
+Editor --> UC_Thumb
+Editor --> UC_Cal
+Editor --> UC_AB
+Editor --> UC_Topics
+
+UC_Compose ..> UC_Extract : <<include>>
+UC_Extract ..> UC_Predict : <<include>>
+UC_Compose ..> UC_Sweep : <<extend>>
+UC_Compose ..> UC_Thumb : <<extend>>
+UC_Cal ..> UC_Drag : <<extend>>
+UC_Cal ..> UC_Compose : <<include>>
+
+note right of UC_Sweep
+  <b>24-Hour Probability Sweep:</b>
+  Iterates through 24 hourly feature vectors
+  holding caption constant, identifying the
+  global maximum probability of 'High' tier.
+end note
+
+note bottom of UC_Thumb
+  <b>OpenCV 4.10 Vision Metric:</b>
+  Evaluates Rule-of-Thirds grid intersections,
+  Laplacian edge sharpness, brightness,
+  and color variance (0 to 100 score).
+end note
+
+@enduml

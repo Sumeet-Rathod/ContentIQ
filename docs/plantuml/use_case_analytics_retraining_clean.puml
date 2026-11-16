@@ -1,0 +1,87 @@
+@startuml
+left to right direction
+
+title ContentIQ: Analytics, Reporting & Continuous Retraining Subsystem
+header Module Specification 2B
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam shadowing true
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 1.5
+    FontColor #1F3864
+    FontStyle bold
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    FontColor #1E293B
+    ArrowColor #1F3864
+}
+
+actor "Agency Administrator" as Admin <<Human>>
+actor "Agency Client (Observer)" as Client <<Human>>
+actor "Celery Background Worker" as Celery <<System>>
+
+rectangle "Analytics, Reporting & Retraining Subsystem" {
+    usecase "UC-14: View Executive Analytics Dashboard
+(KPI Cards, Platform Distribution, Best Times)" as UC_Dash
+    usecase "UC-15: Export Performance Report to Excel (.csv)
+(GLS Syllabus Item 7.3)" as UC_Excel
+    usecase "UC-16: Print Executive Report (PDF)
+(@media print Stylesheet)" as UC_Print
+    usecase "UC-12: Ingest Real Post Metrics
+(Likes, Comments, Shares, Reach)" as UC_Ingest
+    usecase "UC-17: Analyze Comment Sentiment (VADER)
+(Compound Polarity -1.0 to +1.0)" as UC_Sentiment
+    usecase "UC-18: Forecast 30-Day Follower Growth
+(Facebook Prophet 80% Confidence Interval)" as UC_Prophet
+    usecase "UC-19: Trigger Continuous Model Retraining
+(Empirical Feedback Loop)" as UC_Retrain
+}
+
+Admin --> UC_Dash
+Admin --> UC_Retrain
+Admin --> UC_Excel
+Admin --> UC_Print
+Admin --> UC_Sentiment
+Admin --> UC_Prophet
+
+Client --> UC_Dash #0284C7
+Client --> UC_Excel #0284C7
+Client --> UC_Print #0284C7
+Client --> UC_Prophet #0284C7
+
+Celery --> UC_Ingest #475569
+
+UC_Dash ..> UC_Excel : <<extend>>
+UC_Dash ..> UC_Print : <<extend>>
+UC_Ingest ..> UC_Dash : <<include>>
+UC_Ingest ..> UC_Retrain : <<feeds>>
+
+note right of UC_Retrain
+  <b>Continuous Retraining Gate:</b>
+  Only accessible to Admin role.
+  Requires >= 50 real metric records.
+  Re-fits Random Forest model and
+  updates active production artifacts.
+end note
+
+note bottom of Client
+  <b>Client Role (RBAC):</b>
+  Read-only analytical access.
+  Model retrain button is locked.
+end note
+
+@enduml

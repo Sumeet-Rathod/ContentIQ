@@ -1,0 +1,94 @@
+@startuml use_case_analytics_retraining
+title ContentIQ — Analytics, Reporting & Continuous Retraining Subsystem\n(Use Case Specification 2B)
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+skinparam defaultFontColor #1E293B
+
+skinparam packageStyle rectangle
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #1F3864
+    BorderThickness 2
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 13
+}
+
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.8
+    FontColor #1F3864
+    FontStyle bold
+    FontSize 12
+}
+
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #1F3864
+    BorderThickness 1.4
+    FontColor #1E293B
+    FontSize 11
+    ArrowColor #1F3864
+}
+
+actor "Agency Administrator" as Admin
+actor "Agency Client (Observer)" as Client
+actor "Celery Background Worker" as Celery <<System>>
+
+rectangle "Analytics, Reporting & Retraining Subsystem" {
+
+    usecase "UC-15: View Executive Analytics Dashboard\n(KPI Cards, Platform Pie, Best Hours)" as UC_Dash
+    usecase "UC-16: Export Performance Report to Excel (.csv)\n(GLS Syllabus Item 7.3)" as UC_Excel
+    usecase "UC-17: Print Executive Report (PDF)\n(@media print Stylesheet)" as UC_Print
+    usecase "UC-13: Ingest Post-Publication Engagement Metrics\n(Likes, Reach, Actual Tier)" as UC_Ingest
+    usecase "UC-18: Analyze Comment Sentiment\n(VADER Compound Polarity -1.0 to +1.0)" as UC_Sentiment
+    usecase "UC-19: Forecast 30-Day Follower Growth\n(Facebook Prophet 80% Confidence Interval)" as UC_Prophet
+    usecase "UC-20: Benchmark Competitor Accounts\n(Engagement Comparison)" as UC_Comp
+    usecase "UC-21: Trigger Continuous Model Retraining\n(Empirical Feedback Loop)" as UC_Retrain
+}
+
+' Admin Connections
+Admin --> UC_Dash
+Admin --> UC_Retrain
+Admin --> UC_Excel
+Admin --> UC_Print
+Admin --> UC_Sentiment
+Admin --> UC_Prophet
+Admin --> UC_Comp
+
+' Client Connections (Read-Only Observer)
+Client --> UC_Dash #0284C7
+Client --> UC_Excel #0284C7
+Client --> UC_Print #0284C7
+Client --> UC_Prophet #0284C7
+Client --> UC_Comp #0284C7
+
+' Celery Worker (Background Ingestion)
+Celery --> UC_Ingest #475569
+
+' Relationships
+UC_Dash ..> UC_Excel : <<extend>>
+UC_Dash ..> UC_Print : <<extend>>
+UC_Ingest ..> UC_Dash : <<include>>
+UC_Ingest ..> UC_Retrain : <<feeds>>
+
+note right of UC_Retrain
+  <b>Continuous Retraining Gate:</b>
+  Only accessible to <b>Admin</b> role.
+  Validates count(post_metrics) >= 50.
+  Trains candidate model against ground truth,
+  evaluates accuracy delta, and updates
+  the active production model pickle on disk.
+end note
+
+note bottom of Client
+  <b>Observer Security Boundary:</b>
+  Clients can monitor real-time KPIs
+  and export reports, but the Retrain
+  trigger is locked with a warning notice.
+end note
+
+@enduml

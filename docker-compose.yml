@@ -1,0 +1,105 @@
+# ContentIQ - Docker Compose Specification
+# Note: Modern Docker Compose v2+ does NOT include the obsolete 'version:' attribute.
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: contentiq-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - contentiq-net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: contentiq-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - contentiq-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: contentiq-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=contentiq
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=contentiq-super-secret-jwt-token-key-mca-final-year-2026
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - contentiq-net
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: contentiq-celery-worker
+    restart: always
+    command: celery -A app.core.celery_app worker -l info
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=contentiq
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=contentiq-super-secret-jwt-token-key-mca-final-year-2026
+    depends_on:
+      - mongodb
+      - redis
+      - backend
+    networks:
+      - contentiq-net
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: contentiq-celery-beat
+    restart: always
+    command: celery -A app.core.celery_app beat -l info
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=contentiq
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=contentiq-super-secret-jwt-token-key-mca-final-year-2026
+    depends_on:
+      - mongodb
+      - redis
+      - backend
+    networks:
+      - contentiq-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: contentiq-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - contentiq-net
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  contentiq-net:
+    driver: bridge
